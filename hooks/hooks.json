@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start\"",
+            "timeout": 10,
+            "statusMessage": "Prodscope session bootstrap"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-merge.js\"",
+            "timeout": 60,
+            "statusMessage": "Prodscope pre-merge check"
+          }
+        ]
+      }
+    ]
+  }
+}

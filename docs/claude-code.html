@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Prodscope &mdash; Claude Code Setup</title>
+  <meta name="description" content="Install and use Prodscope with Claude Code: native plugin, /prodscope:build command, pre-merge hooks, and MCP verification.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">Prod<span>scope</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="claude-code.html" class="active">Claude Code</a>
+      <a href="codex.html">Codex</a>
+      <a href="cursor.html">Cursor</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+
+  <h1>Claude Code</h1>
+  <p>Claude Code has the deepest integration with Prodscope &mdash; native plugin install, slash commands, and pre-merge hooks.</p>
+
+  <h2>Install</h2>
+
+  <h3>Option A: Native plugin (recommended)</h3>
+  <p>This method auto-updates and integrates with the Claude Code plugin system:</p>
+  <pre><code>/plugin marketplace add ashokdudhade/prodscope
+/plugin install prodscope@prodscope-marketplace</code></pre>
+
+  <h3>Option B: Shell installer</h3>
+  <p>Run from your project root to copy all files locally:</p>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash -s -- --claude-only</code></pre>
+
+  <h3>Option C: Full install (all platforms)</h3>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash</code></pre>
+
+  <h2>Usage</h2>
+
+  <h3>The <code>/prodscope:build</code> command</h3>
+  <p>Type <code>/prodscope:build &lt;task&gt;</code> in your Claude Code session to run the full Builder &rarr; Breaker &rarr; Verify &rarr; Score loop:</p>
+  <pre><code>/prodscope:build "add rate limiting to the API"</code></pre>
+  <p>All four phases run in a <strong>single response</strong>. You will see:</p>
+  <ol>
+    <li><strong>Builder output</strong> &mdash; the proposed diff and a <code>HEALTH_CHECK</code> section</li>
+    <li><strong>Breaker verdict</strong> &mdash; <code>ACCEPT</code> or <code>REJECT</code> with required fixes</li>
+    <li><strong>Verification</strong> &mdash; evidence that smoke steps pass (or documented skips)</li>
+    <li><strong>Reliability score</strong> &mdash; 1&ndash;10 rating with justification</li>
+  </ol>
+  <p>If the Breaker rejects, the Builder automatically re-enters with fixes (up to 3 cycles).</p>
+
+  <h3>The <code>/prodscope:verify</code> command</h3>
+  <p>After a build, run <code>/prodscope:verify</code> to check post-deploy signals via MCP integrations (Sentry, Datadog, etc.):</p>
+  <pre><code>/prodscope:verify</code></pre>
+  <p>This requires MCP servers configured in <code>mcp-config.json</code>. Without them it skips gracefully.</p>
+
+  <h2>Files installed</h2>
+  <pre><code>.claude-plugin/
+  plugin.json              # Plugin manifest
+  marketplace.json         # Marketplace metadata
+commands/
+  build.md                 # /prodscope:build command definition
+  verify.md                # /prodscope:verify command definition
+hooks/
+  hooks.json               # Hook registration (SessionStart + TaskCompleted)
+  session-start            # Session bootstrap hook
+  pre-merge.js             # Pre-merge telemetry gate
+skills/
+  using-prodscope/SKILL.md # Session bootstrap: when the loop runs
+  builder/SKILL.md         # Builder instructions
+  breaker/SKILL.md         # Breaker instructions
+  verification/SKILL.md    # Evidence gate
+  reliability/SKILL.md     # Reliability scoring
+mcp-config.json            # MCP server placeholder</code></pre>
+
+  <h2>Session bootstrap</h2>
+  <p>When a session starts, the <code>SessionStart</code> hook loads <code>skills/using-prodscope/SKILL.md</code> into agent context. This ensures the Builder-Breaker loop activates automatically for implementation tasks &mdash; you don't have to remember to type <code>/prodscope:build</code> every time.</p>
+
+  <h2>Pre-merge hook</h2>
+  <p><code>hooks/pre-merge.js</code> runs automatically when a task completes. It checks MCP telemetry (if configured) and logs results. If MCP is unavailable, it skips with a clear message &mdash; it never blocks.</p>
+
+  <h2>MCP integration</h2>
+  <p><code>mcp-config.json</code> starts empty. Add Sentry, Datadog, or other MCP server entries per vendor docs. Inject API keys via environment variables &mdash; never commit secrets:</p>
+  <pre><code>{
+  "mcpServers": {
+    "sentry": {
+      "url": "https://mcp.sentry.dev/sse",
+      "env": { "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN" }
+    }
+  }
+}</code></pre>
+
+</main>
+
+<footer>
+  <div class="container">Prodscope &mdash; MIT License &mdash; <a href="https://github.com/ashokdudhade/prodscope">GitHub</a></div>
+</footer>
+
+</body>
+</html>

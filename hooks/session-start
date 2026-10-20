@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Prodscope session-start hook — injects the using-prodscope skill
+# into agent context at session start so the Builder-Breaker loop
+# activates automatically for implementation tasks.
+#
+# Works across Claude Code, Cursor, and Copilot CLI by detecting
+# platform-specific env vars and outputting the appropriate JSON shape.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="${CURSOR_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(dirname "$SCRIPT_DIR")}}"
+
+SKILL_FILE="$PLUGIN_ROOT/skills/using-prodscope/SKILL.md"
+
+if [ ! -f "$SKILL_FILE" ]; then
+  echo '{"additionalContext":"[prodscope] using-prodscope skill not found — skipping bootstrap."}' >&2
+  exit 0
+fi
+
+SKILL_CONTENT=$(cat "$SKILL_FILE")
+
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  # Cursor: hookSpecificOutput.additionalContext
+  printf '{"hookSpecificOutput":{"additionalContext":"%s"}}' \
+    "$(echo "$SKILL_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\n/' | tr -d '\n')"
+else
+  # Claude Code / Copilot CLI: additionalContext
+  printf '{"additionalContext":"%s"}' \
+    "$(echo "$SKILL_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\n/' | tr -d '\n')"
+fi

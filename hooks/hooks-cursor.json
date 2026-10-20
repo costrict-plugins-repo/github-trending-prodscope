@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "./hooks/session-start",
+        "timeout": 10,
+        "statusMessage": "Prodscope session bootstrap"
+      }
+    ]
+  }
+}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Prodscope &mdash; Cursor Setup</title>
+  <meta name="description" content="Install and use Prodscope with Cursor: native plugin with marketplace, /prodscope:build command, SRE rules, and skills-based workflow.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">Prod<span>scope</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="claude-code.html">Claude Code</a>
+      <a href="codex.html">Codex</a>
+      <a href="cursor.html" class="active">Cursor</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+
+  <h1>Cursor</h1>
+  <p>Prodscope ships as a native Cursor plugin with a marketplace entry. It bundles skills, rules, commands, and hooks that load automatically when the plugin is installed.</p>
+
+  <h2>Install</h2>
+
+  <h3>Option A: Native plugin (recommended)</h3>
+  <p>Clone the repo and copy the plugin files into your project. Cursor detects <code>.cursor-plugin/plugin.json</code> automatically:</p>
+  <pre><code>git clone https://github.com/ashokdudhade/prodscope.git /tmp/prodscope
+cp -r /tmp/prodscope/.cursor-plugin ./
+cp -r /tmp/prodscope/rules ./
+cp -r /tmp/prodscope/skills ./
+cp -r /tmp/prodscope/hooks ./
+cp /tmp/prodscope/mcp-config.json ./
+mkdir -p .cursor/rules .cursor/commands
+cp /tmp/prodscope/.cursor/rules/prodscope.md .cursor/rules/
+cp /tmp/prodscope/.cursor/commands/prodscope-build.md .cursor/commands/
+cp /tmp/prodscope/.cursor/commands/prodscope-verify.md .cursor/commands/</code></pre>
+
+  <h3>Option B: Shell installer</h3>
+  <p>Run from your project root to copy all Cursor files automatically:</p>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash -s -- --cursor-only</code></pre>
+
+  <h3>Option C: Remote rule (rules only)</h3>
+  <p>For a lighter install without the full plugin, go to <strong>Settings &rarr; Rules &rarr; Add Rule &rarr; Remote Rule (GitHub)</strong> and paste:</p>
+  <pre><code>ashokdudhade/prodscope</code></pre>
+  <p>This loads the SRE rules but not skills, commands, or hooks.</p>
+
+  <h3>Option D: Full install (all platforms)</h3>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash</code></pre>
+
+  <h2>Usage</h2>
+
+  <h3>The <code>/prodscope:build</code> command</h3>
+  <p>Type <code>/prodscope:build &lt;task&gt;</code> in Cursor's chat to run the full Builder &rarr; Breaker &rarr; Verify &rarr; Score loop:</p>
+  <pre><code>/prodscope:build "add rate limiting to the API"</code></pre>
+  <p>You will see all four phases in a single response:</p>
+  <ol>
+    <li><strong>Builder</strong> &mdash; proposed diff + <code>HEALTH_CHECK</code></li>
+    <li><strong>Breaker</strong> &mdash; SRE review verdict (<code>ACCEPT</code> or <code>REJECT</code>)</li>
+    <li><strong>Verification</strong> &mdash; smoke step evidence (or documented skips)</li>
+    <li><strong>Reliability score</strong> &mdash; 1&ndash;10 rating</li>
+  </ol>
+
+  <h3>The <code>/prodscope:verify</code> command</h3>
+  <p>After a build, run <code>/prodscope:verify</code> to check post-deploy signals via MCP integrations (Sentry, Datadog, etc.):</p>
+  <pre><code>/prodscope:verify</code></pre>
+  <p>This requires MCP servers configured in <code>mcp-config.json</code>. Without them it skips gracefully.</p>
+
+  <h3>Always-on rules</h3>
+  <p>Even without using <code>/prodscope:build</code>, the Composer rule at <code>.cursor/rules/prodscope.md</code> applies SRE skepticism to every interaction. It challenges:</p>
+  <ul>
+    <li><strong>Async / concurrency</strong> &mdash; race conditions, unbounded parallelism, missing cancellation</li>
+    <li><strong>Data stores</strong> &mdash; missing indexes, N+1 queries, migration safety</li>
+    <li><strong>Long-running processes</strong> &mdash; event listener leaks, growing caches, timer cleanup</li>
+    <li><strong>Observability</strong> &mdash; can operators tell in production if a change breaks?</li>
+  </ul>
+  <p>If a diff lacks verification steps, the rule prompts for a <code>HEALTH_CHECK</code>.</p>
+
+  <h2>Files installed</h2>
+  <pre><code>.cursor-plugin/
+  plugin.json              # Plugin manifest (with component paths)
+  marketplace.json         # Marketplace entry for plugin discovery
+.cursor/
+  rules/prodscope.md       # Project-level rule (always-on SRE skepticism)
+  commands/
+    prodscope-build.md     # /prodscope:build command
+    prodscope-verify.md    # /prodscope:verify command
+rules/
+  prodscope.mdc            # Plugin rule (.mdc format, auto-discovered)
+hooks/
+  hooks-cursor.json        # Cursor hook registration (sessionStart)
+  session-start            # Session bootstrap hook
+skills/
+  using-prodscope/SKILL.md # Session bootstrap: when the loop runs
+  builder/SKILL.md         # Builder instructions
+  breaker/SKILL.md         # Breaker instructions
+  verification/SKILL.md    # Evidence gate
+  reliability/SKILL.md     # Reliability scoring
+mcp-config.json            # MCP server placeholder (shared)
+.prodscope/logs/           # Rejection/improvement logs (gitignored)</code></pre>
+
+  <h2>Session bootstrap</h2>
+  <p>When a session starts, the <code>sessionStart</code> hook loads <code>skills/using-prodscope/SKILL.md</code> into agent context. This ensures the Builder-Breaker loop activates automatically for implementation tasks &mdash; you don't have to type <code>/prodscope:build</code> for every change.</p>
+
+  <h2>How the plugin works</h2>
+  <p>Cursor uses two layers to load Prodscope:</p>
+
+  <h3>Plugin system</h3>
+  <p><code>.cursor-plugin/plugin.json</code> is the plugin manifest with explicit component paths. Cursor reads it to register Prodscope and discover:</p>
+  <ul>
+    <li><strong>Skills</strong> from <code>skills/</code> &mdash; each subdirectory with a <code>SKILL.md</code></li>
+    <li><strong>Rules</strong> from <code>rules/</code> &mdash; <code>.mdc</code> files with YAML frontmatter</li>
+    <li><strong>Commands</strong> from <code>commands/</code> &mdash; markdown files with YAML frontmatter</li>
+  </ul>
+  <p>The marketplace entry at <code>.cursor-plugin/marketplace.json</code> enables discovery when the repo is used as a plugin source.</p>
+
+  <h3>Project-level config</h3>
+  <p><code>.cursor/rules/prodscope.md</code> is loaded by Cursor's Composer automatically when the workspace is opened, providing SRE skepticism even if the plugin isn't formally installed. This acts as a fallback for lightweight installs.</p>
+
+  <h2>Customizing</h2>
+  <p>Add org-specific production checks by creating files in <code>skills/breaker/checks/</code>. These are automatically picked up during Breaker review. Keep rules thin &mdash; deep logic stays in <code>skills/</code>.</p>
+
+</main>
+
+<footer>
+  <div class="container">Prodscope &mdash; MIT License &mdash; <a href="https://github.com/ashokdudhade/prodscope">GitHub</a></div>
+</footer>
+
+</body>
+</html>

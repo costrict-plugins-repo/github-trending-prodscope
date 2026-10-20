@@ -1,0 +1,35 @@
+{
+  "name": "prodscope",
+  "version": "0.1.0",
+  "description": "Operational-first coding plugin: Builder-Breaker loop with SRE review, HEALTH_CHECK enforcement, reliability scoring, and telemetry hooks.",
+  "author": {
+    "name": "ashokdudhade",
+    "url": "https://github.com/ashokdudhade"
+  },
+  "homepage": "https://ashokdudhade.github.io/prodscope/",
+  "repository": "https://github.com/ashokdudhade/prodscope",
+  "license": "MIT",
+  "keywords": [
+    "sre",
+    "observability",
+    "code-review",
+    "multi-agent",
+    "builder-breaker",
+    "reliability"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./mcp-config.json",
+  "interface": {
+    "displayName": "Prodscope",
+    "shortDescription": "Builder-Breaker loop with SRE review for every code change",
+    "longDescription": "Prodscope adds a structured Builder-Breaker loop to your coding workflow. A Builder proposes the smallest coherent diff with a HEALTH_CHECK, then a Breaker reviews it with senior SRE skepticism. Changes are scored 1-10 on reliability before they land.",
+    "developerName": "ashokdudhade",
+    "category": "Code Quality",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://ashokdudhade.github.io/prodscope/",
+    "defaultPrompt": [
+      "Use Prodscope to build a feature with production-grade review.",
+      "Use Prodscope to review this change for production risks."
+    ]
+  }
+}

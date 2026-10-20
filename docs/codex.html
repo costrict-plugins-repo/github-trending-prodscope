@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Prodscope &mdash; OpenAI Codex Setup</title>
+  <meta name="description" content="Install and use Prodscope with OpenAI Codex: native plugin marketplace, AGENTS.md orchestration, skills-based workflow.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">Prod<span>scope</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="claude-code.html">Claude Code</a>
+      <a href="codex.html" class="active">Codex</a>
+      <a href="cursor.html">Cursor</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+
+  <h1>OpenAI Codex</h1>
+  <p>Prodscope ships as a native Codex plugin with a repo-scoped marketplace. Codex detects the plugin automatically and runs the full Builder-Breaker loop on every task.</p>
+
+  <h2>Install</h2>
+
+  <h3>Option A: Native plugin (recommended)</h3>
+  <p>Codex detects the plugin automatically when the manifest and marketplace files are present. Copy them into your project:</p>
+  <pre><code>git clone https://github.com/ashokdudhade/prodscope.git /tmp/prodscope
+cp -r /tmp/prodscope/.codex-plugin ./
+cp -r /tmp/prodscope/.agents ./
+cp /tmp/prodscope/AGENTS.md ./
+cp -r /tmp/prodscope/skills ./
+cp /tmp/prodscope/mcp-config.json ./</code></pre>
+  <p>Codex reads <code>.codex-plugin/plugin.json</code> to register Prodscope, and <code>.agents/plugins/marketplace.json</code> installs it by default. No manual activation needed.</p>
+
+  <h3>Option B: Shell installer</h3>
+  <p>Run from your project root to copy all Codex files automatically:</p>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash -s -- --codex-only</code></pre>
+
+  <h3>Option C: Full install (all platforms)</h3>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash</code></pre>
+
+  <h2>Usage</h2>
+  <p>Point Codex at your repo. It picks up <code>AGENTS.md</code> automatically and follows the orchestration for every implementation task:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <strong>Phase 1 &mdash; Builder:</strong> Codex reads <code>skills/builder/SKILL.md</code>, implements the smallest coherent diff, and attaches a <code>HEALTH_CHECK</code> with smoke steps, signals, and rollback.
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <strong>Phase 2 &mdash; Breaker:</strong> Codex reads <code>skills/breaker/SKILL.md</code> and reviews its own output as a senior SRE. If flaws are found, it rejects and loops back to Builder (max 3 cycles).
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <strong>Phase 3 &mdash; Verification:</strong> Codex reads <code>skills/verification/SKILL.md</code> and runs HEALTH_CHECK smoke steps with evidence. Failures loop back to Builder.
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <strong>Phase 4 &mdash; Reliability:</strong> Codex reads <code>skills/reliability/SKILL.md</code> and scores the change 1&ndash;10 on tests, observability, error handling, ops, and security.
+    </div>
+  </div>
+
+  <p>The entire loop runs automatically in a single response &mdash; no slash commands needed.</p>
+
+  <h2>Files installed</h2>
+  <pre><code>.codex-plugin/
+  plugin.json                # Plugin manifest (Codex reads this)
+.agents/
+  plugins/
+    marketplace.json         # Repo-scoped marketplace catalog
+AGENTS.md                    # Orchestration bridge
+skills/
+  using-prodscope/SKILL.md   # Session bootstrap: when the loop runs
+  builder/SKILL.md           # Builder instructions
+  breaker/SKILL.md           # Breaker instructions
+  verification/SKILL.md      # Evidence gate
+  reliability/SKILL.md       # Reliability scoring
+mcp-config.json              # MCP server placeholder (shared)
+.prodscope/logs/             # Rejection/improvement logs (gitignored)</code></pre>
+
+  <h2>How the plugin works</h2>
+  <p>Codex uses two mechanisms to load Prodscope:</p>
+
+  <h3>Plugin manifest</h3>
+  <p><code>.codex-plugin/plugin.json</code> identifies the plugin, points to bundled skills, and provides metadata for the Codex UI. Codex detects this file and registers Prodscope as an available plugin.</p>
+
+  <h3>Repo marketplace</h3>
+  <p><code>.agents/plugins/marketplace.json</code> is a repo-scoped marketplace catalog. It tells Codex to install Prodscope by default when opening this project. The marketplace entry points to the plugin root with <code>INSTALLED_BY_DEFAULT</code> policy, so no manual activation is needed.</p>
+
+  <h3>AGENTS.md</h3>
+  <p><code>AGENTS.md</code> at the project root provides orchestration instructions that Codex reads automatically. It instructs Codex to:</p>
+  <ul>
+    <li>Execute four phases in order for every implementation task</li>
+    <li>Read each skill file for detailed instructions</li>
+    <li>Never stop after Phase 1 &mdash; always complete the full loop</li>
+    <li>Loop back on Breaker rejection (max 3 cycles)</li>
+    <li>Log outcomes to <code>.prodscope/logs/</code></li>
+  </ul>
+
+  <h2>Customizing</h2>
+  <p>Extend the Breaker's review checklist by adding files to <code>skills/breaker/checks/</code>. These are automatically included in the review. Use this for org-specific production patterns.</p>
+
+  <h2>Adding to another project</h2>
+  <p>To use Prodscope in a different repo, copy the plugin files or add the marketplace entry pointing to your local Prodscope install:</p>
+  <pre><code># Personal marketplace (applies to all your repos)
+mkdir -p ~/.agents/plugins ~/.codex/plugins
+cp -r /path/to/prodscope ~/.codex/plugins/prodscope
+
+# Add to ~/.agents/plugins/marketplace.json:
+# { "name": "prodscope", "source": { "source": "local", "path": "./.codex/plugins/prodscope" }, ... }</code></pre>
+
+</main>
+
+<footer>
+  <div class="container">Prodscope &mdash; MIT License &mdash; <a href="https://github.com/ashokdudhade/prodscope">GitHub</a></div>
+</footer>
+
+</body>
+</html>

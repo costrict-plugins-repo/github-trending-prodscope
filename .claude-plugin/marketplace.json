@@ -1,0 +1,21 @@
+{
+  "name": "prodscope-marketplace",
+  "owner": {
+    "name": "ashokdudhade"
+  },
+  "metadata": {
+    "description": "Prodscope — operational-first Builder-Breaker coding plugin",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "prodscope",
+      "source": "./",
+      "description": "Builder-Breaker loop with SRE review, HEALTH_CHECK enforcement, reliability scoring, and telemetry hooks.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": ["sre", "builder-breaker", "code-review", "observability"],
+      "category": "code-quality"
+    }
+  ]
+}

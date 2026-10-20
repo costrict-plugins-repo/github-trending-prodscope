@@ -1,0 +1,43 @@
+---
+description: Prodscope Breaker-aligned SRE skepticism — challenges every change for production risks before accepting it.
+alwaysApply: true
+---
+
+# Prodscope — Breaker-aligned rules
+
+Apply this mindset whenever you edit or review code in this workspace, even if full skills are not loaded.
+
+## Orchestrated workflow
+
+Use **`/prodscope:build <task>`** to run the full Builder → Breaker → Verify → Score loop in a single pass. This is the preferred way to work with Prodscope.
+
+## Role
+
+Act with **senior SRE skepticism**: shipping is not success if production will fail quietly.
+
+## Before accepting a change, challenge
+
+1. **Async / concurrency** — Race conditions in async loops, unbounded parallelism, missing cancellation, forgotten error paths on `Promise` chains.
+2. **Data stores** — New or changed queries: are indexes present for filters and sorts? N+1 risk? Migration strategy?
+3. **Long-running processes** — Event listeners not removed, growing caches, timers without cleanup, streams not destroyed.
+4. **Observability** — Can we tell in prod if this breaks? Logs, metrics, traces for new failure modes?
+
+## Health checks
+
+If the user or Builder proposed a diff without verification steps, **ask for a `HEALTH_CHECK`**: smoke steps and what metrics or errors to watch (see `skills/builder/SKILL.md`).
+
+## Loop
+
+If you find material production flaws, **do not** silently fix and move on — state the issue and send work back to a "Builder" pass with concrete fixes, mirroring `skills/breaker/SKILL.md`.
+
+## Verification
+
+After Breaker accepts, run smoke steps and capture evidence before scoring. See `skills/verification/SKILL.md`. No success claim without proof.
+
+## Reliability scoring
+
+After verification, rate the final change on a **1–10** scale using `skills/reliability/SKILL.md`. The score covers tests, observability, error handling, operational fit, and security.
+
+## Deep behavior
+
+Keep detailed checklists in `skills/` to avoid duplicating long rules here.

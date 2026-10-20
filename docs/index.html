@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Prodscope — Builder-Breaker Loop for AI Coding</title>
+  <meta name="description" content="Operational-first agentic plugin: Builder ships code, Breaker catches production risks, every change scored for reliability.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">Prod<span>scope</span></a>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="claude-code.html">Claude Code</a>
+      <a href="codex.html">Codex</a>
+      <a href="cursor.html">Cursor</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="hero">
+    <img src="logo.png" alt="Prodscope logo" class="hero-logo">
+    <span class="badge">Open Source</span>
+    <h1>Ship code that survives production</h1>
+    <p>Prodscope adds a structured Builder-Breaker loop to your AI coding assistant so every change is challenged for production risks before it lands.</p>
+  </section>
+
+  <section class="diagram">/prodscope:build "add rate limiting to the API"
+  |
+  +-- Phase 1: Builder
+  |     Implements smallest coherent diff
+  |     Attaches HEALTH_CHECK (smoke steps, signals, rollback)
+  |
+  +-- Phase 2: Breaker
+  |     SRE review: async races, DB indexes, memory, security
+  |     REJECT --> loops back to Builder (max 3 cycles)
+  |     ACCEPT --> proceeds to verification
+  |
+  +-- Phase 3: Verification
+  |     Runs smoke steps with evidence
+  |     Failure --> loops back to Builder
+  |
+  +-- Phase 4: Reliability score
+        Rates change 1-10 (tests, observability, errors, ops, security)
+        Logs outcome to .prodscope/logs/</section>
+
+  <h2 style="text-align:center;margin-top:2rem">Choose your platform</h2>
+
+  <div class="cards">
+    <a class="card" href="claude-code.html">
+      <h3>Claude Code</h3>
+      <p>Native plugin install with auto-updates, <code>/prodscope:build</code> and <code>/prodscope:verify</code> commands, pre-merge hooks.</p>
+    </a>
+    <a class="card" href="codex.html">
+      <h3>OpenAI Codex</h3>
+      <p>Native plugin with repo marketplace. Codex detects it automatically and runs the full loop.</p>
+    </a>
+    <a class="card" href="cursor.html">
+      <h3>Cursor</h3>
+      <p>Native plugin with marketplace entry, SRE rules, <code>/prodscope:build</code> and <code>/prodscope:verify</code> commands, session hooks.</p>
+    </a>
+  </div>
+
+  <section class="page" style="padding-top:1rem">
+    <h2>Install</h2>
+    <p>Each platform has a <strong>recommended native install</strong> &mdash; see the platform pages above for details. For a quick start, clone the repo and copy the files you need:</p>
+    <pre><code>git clone https://github.com/ashokdudhade/prodscope.git /tmp/prodscope</code></pre>
+    <p>Then follow the native plugin steps on the <a href="claude-code.html">Claude Code</a>, <a href="codex.html">Codex</a>, or <a href="cursor.html">Cursor</a> page.</p>
+
+    <h3>Shell installer (alternative)</h3>
+    <p>Or use the shell installer to copy all files automatically. No global install, no dependencies:</p>
+    <pre><code># All platforms
+curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash
+
+# Single platform
+curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash -s -- --claude-only
+curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash -s -- --cursor-only
+curl -fsSL https://raw.githubusercontent.com/ashokdudhade/prodscope/main/install.sh | bash -s -- --codex-only</code></pre>
+
+    <h2>How it works</h2>
+    <p>Prodscope runs four phases in a <strong>single response</strong> &mdash; no manual handoff between roles:</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Builder</strong> implements the smallest coherent diff and attaches a <code>HEALTH_CHECK</code> with smoke steps, signals to watch, and a rollback plan.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Breaker</strong> reviews as a senior SRE: async races, missing indexes, memory leaks, security gaps, and whether the health check is credible. Rejects with specific fixes if needed (max 3 cycles).
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Verification</strong> runs HEALTH_CHECK smoke steps and captures evidence. No success claim without proof. Failures loop back to Builder.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Reliability score</strong> rates the final change 1&ndash;10 across tests, observability, error handling, operational fit, and security.
+      </div>
+    </div>
+
+    <h2>What gets installed</h2>
+    <pre><code>your-project/
++-- skills/
+|   +-- using-prodscope/SKILL.md  # Session bootstrap: when the loop runs
+|   +-- builder/SKILL.md          # Phase 1: feature delivery + HEALTH_CHECK
+|   +-- breaker/SKILL.md          # Phase 2: SRE review + REJECT loop
+|   +-- verification/SKILL.md     # Phase 3: evidence that smoke steps pass
+|   +-- reliability/SKILL.md      # Phase 4: reliability scoring (1-10)
++-- .claude-plugin/
+|   +-- plugin.json               # Claude Code manifest
+|   +-- marketplace.json          # Claude Code marketplace entry
++-- .cursor-plugin/
+|   +-- plugin.json               # Cursor plugin manifest
+|   +-- marketplace.json          # Cursor marketplace entry
++-- .cursor/
+|   +-- rules/prodscope.md        # Cursor project-level rule
+|   +-- commands/
+|       +-- prodscope-build.md    # Cursor /prodscope:build command
+|       +-- prodscope-verify.md   # Cursor /prodscope:verify command
++-- rules/
+|   +-- prodscope.mdc             # Cursor plugin rule (.mdc format)
++-- commands/
+|   +-- build.md                  # Claude Code /prodscope:build command
+|   +-- verify.md                 # Claude Code /prodscope:verify command
++-- hooks/
+|   +-- hooks.json                # Claude Code hook registration
+|   +-- hooks-cursor.json         # Cursor hook registration
+|   +-- session-start             # Session bootstrap hook (all platforms)
+|   +-- pre-merge.js              # Pre-merge telemetry gate
++-- .codex-plugin/plugin.json     # Codex plugin manifest
++-- .agents/plugins/
+|   +-- marketplace.json          # Codex repo marketplace
++-- AGENTS.md                     # Codex orchestration bridge
++-- mcp-config.json               # MCP server placeholder
++-- .prodscope/logs/              # Rejection/improvement logs (gitignored)</code></pre>
+
+    <h2>Uninstall</h2>
+    <pre><code>rm -rf skills/ rules/ commands/ hooks/ .claude-plugin/ .cursor-plugin/ .codex-plugin/ \
+  .agents/ .cursor/rules/prodscope.md \
+  .cursor/commands/prodscope-build.md .cursor/commands/prodscope-verify.md \
+  AGENTS.md mcp-config.json .prodscope/</code></pre>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">Prodscope &mdash; MIT License &mdash; <a href="https://github.com/ashokdudhade/prodscope">GitHub</a></div>
+</footer>
+
+</body>
+</html>
